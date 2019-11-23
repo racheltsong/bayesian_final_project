@@ -1,0 +1,48 @@
+---
+title: "final"
+author: "Rachel Tsong"
+date: "11/22/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(CVTuningCov)
+library(MASS)
+```
+
+# Simulation
+
+```{r}
+set.seed(1)
+
+x1i = rnorm(2000, 0, 1)
+x2i = NULL
+
+for(i in 1:length(x1i)){
+  x2i[i] = rbinom(1, 1, 1/(1+exp(-0.2-0.2*x1i[i])))
+}
+
+zi = rbinom(2000, 1, 0.5)
+
+beta_t = matrix(c(rep(-1, 4), rep(0.5, 4), rep(1, 4), 0.4, -0.2, -0.4, -0.6), nrow = 4, ncol = 4)
+
+sigma = AR1(4, rho = 0.8)
+
+epsilon = mvrnorm(2000, mu = c(0,0,0,0), Sigma = sigma)
+
+p_ij = dnorm(x = (beta_t[1,] + x1i * (beta_t[2,]) + x2i * (beta_t[3,]) + zi * (beta_t[4,]) + epsilon), 0, 1)
+
+
+
+```
+
+
+
+
+
+
+
+
