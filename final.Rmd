@@ -2,7 +2,7 @@
 title: "final"
 author: "Rachel Tsong"
 date: "11/22/2019"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -15,34 +15,182 @@ library(MASS)
 
 # Simulation
 
+### Generate covariates, intervention indicator, and parameters
 ```{r}
 set.seed(1)
 
+# generate baseline covariates x_1i and x_2i
 x1i = rnorm(2000, 0, 1)
 x2i = NULL
 
-for(i in 1:length(x1i)){
-  x2i[i] = rbinom(1, 1, 1/(1+exp(-0.2-0.2*x1i[i])))
+for(j in 1:length(x1i)){
+  x2i[j] = rbinom(1, 1, 1/(1+exp(-0.2-0.2*x1i[j])))
 }
 
+# generate intervention indicator z_i
 zi = rbinom(2000, 1, 0.5)
 
-beta_t = matrix(c(rep(-1, 4), rep(0.5, 4), rep(1, 4), 0.4, -0.2, -0.4, -0.6), nrow = 4, ncol = 4)
-
+# generate covariance matrix
 sigma = AR1(4, rho = 0.8)
 
+# generate subject specific random effects
 epsilon = mvrnorm(2000, mu = c(0,0,0,0), Sigma = sigma)
-
-p_ij = dnorm(x = (beta_t[1,] + x1i * (beta_t[2,]) + x2i * (beta_t[3,]) + zi * (beta_t[4,]) + epsilon), 0, 1)
-
-
 
 ```
 
 
+### Generate Response
+```{r}
+# set regression coefficients
+beta_t = matrix(c(rep(-1, 4), rep(0.5, 4), rep(1, 4), 0.4, -0.2, -0.4, -0.6), nrow = 4, ncol = 4)
+
+# generate probability of response
+pi0 = dnorm(x = (beta_t[1,1] + (x1i * beta_t[1,2]) + (x2i * beta_t[1,3]) + (zi * beta_t[1,4]) + epsilon[,1]), 0, 1)
+pi1 = dnorm(x = (beta_t[2,1] + (x1i * beta_t[2,2]) + (x2i * beta_t[2,3]) + (zi * beta_t[2,4]) + epsilon[,2]), 0, 1)
+pi2 = dnorm(x = (beta_t[3,1] + (x1i * beta_t[3,2]) + (x2i * beta_t[3,3]) + (zi * beta_t[3,4]) + epsilon[,3]), 0, 1)
+pi3 = dnorm(x = (beta_t[4,1] + (x1i * beta_t[4,2]) + (x2i * beta_t[4,3]) + (zi * beta_t[4,4]) + epsilon[,4]), 0, 1)
+
+pit = cbind(pi0, pi1, pi2, pi3)
+
+# generate response
+yi0 = NULL
+yi1 = NULL
+yi2 = NULL
+yi3 = NULL
+
+for (j in 1:length(pi1)) {
+  yi0[j] = rbinom(1,1, pi0[j])
+  yi1[j] = rbinom(1,1, pi1[j])
+  yi2[j] = rbinom(1,1, pi2[j])
+  yi3[j] = rbinom(1,1, pi3[j])
+}
+
+yit = cbind(yi0, yi1, yi2, yi3)
+
+```
 
 
+### Simulate Nonignorable Missing data
+```{r}
+# set gamma 
+gamma_t = matrix(c(-2.5, -2, -2.8, -2.8, rep(0.5,4), rep(-0.5, 5), 
+                 -0.25, 0.25, 0.50, 0, -0.25, -0.6, 0.6, 0, 0.5,
+                 1.3, -0.5, 0, 0.4, 1.7, 1.7), nrow = 4, ncol = 7)
 
+# generate missing data indicator
+Ri0_n = NULL
+Ri1_n = NULL
+Ri2_n = NULL
+Ri3_n = NULL
+
+# t = 0
+  logit_pi0_n = gamma_t[1,1] + (x1i * gamma_t[1,2]) + (x2i * gamma_t[1,3]) + (zi * gamma_t[1,4]) +
+              (0 * gamma_t[1,5]) + (0 * gamma_t[1,6]) + (yi0 * gamma_t[1,7])
+    
+  pi0_n = exp(logit_pi0_n) / (1 + exp(logit_pi0_n))
+    
+  for (j in 1:length(pi0_n)) {Ri0_n[j] = rbinom(1, 1, pi0_n[j])}
+  
+  
+# t = 1
+  logit_pi1_n = gamma_t[2,1] + (x1i * gamma_t[2,2]) + (x2i * gamma_t[2,3]) + (zi * gamma_t[2,4]) +
+              (Ri0_n * gamma_t[2,5]) + (yi0 * gamma_t[2,6]) + (yi1 * gamma_t[2,7])
+    
+  pi1_n = exp(logit_pi1_n) / (1 + exp(logit_pi1_n))
+    
+  for (j in 1:length(pi1_n)) {Ri1_n[j] = rbinom(1, 1, pi1_n[j])}
+
+  
+# t = 2
+  logit_pi2_n = gamma_t[3,1] + (x1i * gamma_t[3,2]) + (x2i * gamma_t[3,3]) + (zi * gamma_t[3,4]) +
+              ((Ri0_n+Ri1_n) * gamma_t[3,5]) + (yi1 * gamma_t[3,6]) + (yi2 * gamma_t[3,7])
+    
+  pi2_n = exp(logit_pi2_n) / (1 + exp(logit_pi2_n))
+    
+  for (j in 1:length(pi2_n)) {Ri2_n[j] = rbinom(1, 1, pi2_n[j])}
+  
+  
+# t = 3
+  logit_pi3_n = gamma_t[4,1] + (x1i * gamma_t[4,2]) + (x2i * gamma_t[4,3]) + (zi * gamma_t[4,4]) +
+              ((Ri0_n+Ri1_n+Ri2_n) * gamma_t[4,5]) + (yi2 * gamma_t[4,6]) + (yi3 * gamma_t[4,7])
+    
+  pi3_n = exp(logit_pi3_n) / (1 + exp(logit_pi3_n))
+
+  for (j in 1:length(pi3_n)) {Ri3_n[j] = rbinom(1, 1, pi3_n[j])}
+
+```
+
+
+### Create final data set for nonignorable missing data
+```{r}
+Yi0_n = if_else(Ri0_n == 0, yi0, NULL)
+Yi1_n = if_else(Ri1_n == 0, yi1, NULL)
+Yi2_n = if_else(Ri2_n == 0, yi2, NULL)
+Yi3_n = if_else(Ri3_n == 0, yi3, NULL)
+
+Yit_n = cbind(Yi0_n, Yi1_n, Yi2_n, Yi3_n)
+```
+
+
+### Simulate Ignorable Missing Data
+Set $\gamma_{5t}$ and $\gamma_{6t}$ to equal to 0 so that $P_{it}$ depends only on intervention indicator, the covariates, and the cumulative number of missing visits
+```{r}
+# generate missing data indicator
+Ri0_i = NULL
+Ri1_i = NULL
+Ri2_i = NULL
+Ri3_i = NULL
+
+# t = 0
+  logit_pi0_i = gamma_t[1,1] + (x1i * gamma_t[1,2]) + (x2i * gamma_t[1,3]) + (zi * gamma_t[1,4]) + 
+                (0 * gamma_t[1,5])
+    
+  pi0_i = exp(logit_pi0_i) / (1 + exp(logit_pi0_i))
+    
+  for (j in 1:length(pi0_i)) {Ri0_i[j] = rbinom(1, 1, pi0_i[j])}
+  
+  
+# t = 1
+  logit_pi1_i = gamma_t[2,1] + (x1i * gamma_t[2,2]) + (x2i * gamma_t[2,3]) + (zi * gamma_t[2,4]) + 
+                (Ri0_i * gamma_t[2,5])
+    
+  pi1_i = exp(logit_pi1_i) / (1 + exp(logit_pi1_i))
+    
+  for (j in 1:length(pi1_i)) {Ri1_i[j] = rbinom(1, 1, pi1_i[j])}
+
+  
+# t = 2
+  logit_pi2_i = gamma_t[3,1] + (x1i * gamma_t[3,2]) + (x2i * gamma_t[3,3]) + (zi * gamma_t[3,4]) + 
+                ((Ri0_i+Ri1_i) * gamma_t[3,5])
+    
+  pi2_i = exp(logit_pi2_i) / (1 + exp(logit_pi2_i))
+    
+  for (j in 1:length(pi2_i)) {Ri2_i[j] = rbinom(1, 1, pi2_i[j])}
+  
+  
+# t = 3
+  logit_pi3_i = gamma_t[4,1] + (x1i * gamma_t[4,2]) + (x2i * gamma_t[4,3]) + (zi * gamma_t[4,4]) +
+              ((Ri0_i+Ri1_i+Ri2_i) * gamma_t[4,5])
+    
+  pi3_i = exp(logit_pi3_i) / (1 + exp(logit_pi3_i))
+
+  for (j in 1:length(pi3_i)) {Ri3_i[j] = rbinom(1, 1, pi3_i[j])}
+
+
+```
+
+### Create final data set for ignorable missing data
+```{r}
+Yi0_i = if_else(Ri0_i == 0, yi0, NULL)
+Yi1_i = if_else(Ri1_i == 0, yi1, NULL)
+Yi2_i = if_else(Ri2_i == 0, yi2, NULL)
+Yi3_i = if_else(Ri3_i == 0, yi3, NULL)
+
+Yit_i = cbind(Yi0_i, Yi1_i, Yi2_i, Yi3_i)
+```
+
+
+# Fit ignorable and nonignorable models and compare DIC and LPML
 
 
 
