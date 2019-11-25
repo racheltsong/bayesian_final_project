@@ -191,6 +191,8 @@ Yit_i = cbind(Yi0_i, Yi1_i, Yi2_i, Yi3_i)
 
 
 # Fit ignorable and nonignorable models and compare DIC and LPML
+```{r}
 
+```
 
 
