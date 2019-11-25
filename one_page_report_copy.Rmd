@@ -20,7 +20,7 @@ Longitudinal binary responses can be modeled by the following probit mixed-effec
 $$P(y_{it}=1|z_i,x_{1i},x_{2i},\beta^*_t,\epsilon_t^*)=\Phi(\beta_{0t}^*+x_{i1}\beta^*_{1t}+x_{2i}\beta^*_{2t}+z_i\beta_{3t}^*+\epsilon_{it}^*\;(1)$$	
   
 We let $x_{ij}$~$N(0,1)$, $x_{2i}|x_{1i}$~$Bernoulli(\frac{1}{1+e^{-0.2-0.2x_{1i}}})$, $z_i$~$Bernoulli(0.5)$, $\epsilon$~$N(0, \frac{\sigma^2}{1+\sigma^2}\Sigma)$ where $\sigma^2=2$ and $\Sigma$ is a 4x4 AR(1) correlation matrix with $\rho=0.8$. The beta matrix is:
-```{r}
+```{r include = FALSE, echo=TRUE}
 beta_t = matrix(c(rep(-1, 4), rep(0.5, 4), rep(1, 4), 0.4, -0.2, -0.4, -0.6), nrow = 4, ncol = 4)
 beta_t
 ```
@@ -29,6 +29,15 @@ beta_t
 The missing data mechanism $R_{it}$ was modeled $R_{it}$~$Bernoulli(P_{it})$ where $P_{it}$ is:
 
 $$logit(P_{it})=\gamma_{0t}+x_{1i}\gamma_{1t}+x_{2i}\gamma_{2t}+z_{i}\gamma_{3t}+\sum{R_{ij}\gamma_{4t}}+y_{it-1}\gamma_{5t}+y_{it}\gamma_{6t}$$
+  
+The gamma matrix is:
+
+```{r include=FALSE, echo=TRUE}
+gamma_t = matrix(c(-2.5, -2, -2.8, -2.8, rep(0.5,4), rep(-0.5, 5), 
+                 -0.25, 0.25, 0.50, 0, -0.25, -0.6, 0.6, 0, 0.5,
+                 1.3, -0.5, 0, 0.4, 1.7, 1.7), nrow = 4, ncol = 7)
+gamma_t
+```
 
 
 ## References
