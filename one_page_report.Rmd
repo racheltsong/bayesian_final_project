@@ -7,18 +7,45 @@ header-includes:
 output: pdf_document
 ---
 
-## Background and Motivation
+## Plan of Presentation
+
+I. Give background information and motivation for our topic
+II. Describe the proposed model for nonignorable missing data and methods for Bayesian inference
+III. Compute a simulation to demonstrate application of our proposed model 
+IV. Compare the nonignorable model to ignorable model using DIC
+
+
+## I. Background and Motivation
 
   Missing data are often a concern in longitudinal clinical trials. It is not uncommon for subjects enrolled in longitudinal trials to have intermittent missingness due to missed visits or permanent missingness due to drop-out. These missing data can be classified into three categories: missing completely at random (MCAR), missing at random (MAR), and missing not at random (MNAR). Data are considered to be MCAR if the missingness is independent of both observed and unobserved data. Data are MAR if the missingness is independent of the unobserved data conditioned on the observed data. MCAR and MAR are classified as “ignorable” mechanisms of missingness because the missing data mechanism does not need to be specified in the log-likelihood. However, MNAR data are when the probability of missingness depends on some unobserved variable, and this missing data mechanism is referred to as “nonignorable” because the missingness mechanism needs to be incorporated into the likelihood estimates.  Inappropriate handling of missing data can lead to biased inferences, thus it is of great clinical significance to develop methods for handling missing data.
   
   Bayesian methods are a useful approach for dealing with missing data because they consider missing data as random variables whose posterior distributions can be obtained by specifying priors and missing covariate distributions. Bayesian approaches have been shown to produce more reliable results compared to traditional missing data models such as multiple imputation. We reviewed a Bayesian model for nonignorably missing data with binary responses in a longitudinal study developed by Wu et al. (2018). Using the methods they developed, we used their method on a simulated dataset and assessed model performance. 
 
-## The Proposed Models
+
+## II. The Proposed Models and Bayesian Inference
 
 Longitudinal binary responses can be modeled by the following probit mixed-effects regression model for t time points and k health districts where $x_1$ are baseline covariates, $\beta^*$ are regression coefficients corresponding to the treatment condition, $\zeta_k$ are the random effects with variance $\tau^*$:
 
 $$P(y_t=1|z,x_1,k,\beta^*,\tau^*,\zeta_k,\epsilon_t^*)=\Phi(z\beta^*_{1t}+x_1'\beta^*_{2t}+\tau^*\zeta_k+\epsilon_t^*\;(1)$$	
 This model suffers from an identifiability issue because the variance of the random effects cannot be estimated. The authors propose a remedy by reparametizing
+
+
+Logarithm of the joint likelihood function:
+based on $\tilde{D}_{obs}$ that is a subset of $D_{obs}$ such that the likelihood function of the parameters does not involve missing data and $D_{obs} = \{y_{i,obs}, z_i, k_i, x_{i1}, R_i, i=1,...,n \}$
+
+$$ l(\theta \ | \ \tilde{D}_{obs}) = log \int \ \prod_{(i,t) \in \tilde{D}_{obs}} 1(\mathbf{w_{it}} \ge \mathbf{0})^{y_{it}} 1(\mathbf{w_{it}} < \mathbf{0})^{1-y_{it}}$$ 
+$$\frac{1}{\sqrt{2\pi(1-\alpha)}} exp\{-\frac{(w_{it}-z_i\beta_{1t}-\mathbf{x}^{'}_{1i}\beta_{2t}-\tau\zeta_{k_i}-\varepsilon_{it})^2}{2(1-\alpha)}\}d\mathbf{w}$$
+$$\frac{1}{\sqrt{2\pi}}exp\left(-\frac{\zeta_{k_i}^2}{2}\right)d\zeta\frac{1}{\sqrt{2\pi \ | \ \alpha\Sigma \ |}}exp\{-\frac{1}{2\alpha}\varepsilon_i^{'}\}de$$
+$$+ \ log \ \prod_{(i,t) \in \tilde{D}_{obs}}P_{it}^{1(r_{it}=1)}(1-P_{it})^{1(r_{it}=0)} $$
+Log-likelihood of $\gamma_t$
+
+$$l(\gamma_t|D_c) = \begin{cases}\sum_{i=1}^{n}1(r_{it}=0)log(1-P_{it}) \ \ t=0,\\\\ \sum_{i=1}^{n}1(r_{it-1}=0)1(r_{it}=0)log(1-P_{it}) \ \ t>0 \end{cases} $$
+
+Joint Prior Distribution for $\gamma_t$
+
+$$\pi(\gamma_t)\propto|\mathbf{X}_t^{*'}\mathbf{D}_t\mathbf{X}_t^{*}|^{1/2}$$
+where
+$$\mathbf{X}_t^{*}=\begin{cases}[1(r_{it}=0)\mathbf{X}_{it}^{*}:i=1,..,n]^{'} \ \ t=0,\\\\  [1(r_{it-1}=0)1(r_{it}=0)\mathbf{X}_{it}^{*}:i=1,..,n]^{'} \ \ t>0\end{cases} $$
 
 ## References
 Ma Z, Chen G. Bayesian methods for dealing with missing data problems. Journal of the Korean Statistical Society. 2018;47(3):297-313. doi:10.1016/j.jkss.2018.03.002.
