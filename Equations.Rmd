@@ -1,0 +1,30 @@
+---
+title: "Equations"
+author: "Dayoung Yu (dry2115)"
+date: "11/25/2019"
+output: html_document
+---
+
+Longitudinal binary responses can be modeled by the following probit mixed-effects regression model for t time points and k health districts where $x_1$ are baseline covariates, $\beta^*$ are regression coefficients corresponding to the treatment condition, $\zeta_k$ are the random effects with variance $\tau^*$:
+
+$$P(y_t=1|z,x_1,k,\beta^*,\tau^*,\zeta_k,\epsilon_t^*)=\Phi((z\beta^*_{1t}+x_1'\beta^*_{2t}+\tau^*\zeta_k+\varepsilon_t^*) \sqrt{1+\sigma^2}) = \pi_t$$	
+
+The above model is reparamaterized to resolve the issues of non-idenfiability of betas and marginal variance.
+
+
+Logarithm of the joint likelihood function:
+based on $\tilde{D}_{obs}$ that is a subset of $D_{obs}$ such that the likelihood function of the parameters does not involve missing data and $D_{obs} = \{y_{i,obs}, z_i, k_i, x_{i1}, R_i, i=1,...,n \}$
+
+$$ l(\theta \ | \ \tilde{D}_{obs}) = log \int \ \prod_{(i,t) \in \tilde{D}_{obs}} 1(\mathbf{w_{it}} \ge \mathbf{0})^{y_{it}} 1(\mathbf{w_{it}} < \mathbf{0})^{1-y_{it}}$$ 
+$$\frac{1}{\sqrt{2\pi(1-\alpha)}} exp\{-\frac{(w_{it}-z_i\beta_{1t}-\mathbf{x}^{'}_{1i}\beta_{2t}-\tau\zeta_{k_i}-\varepsilon_{it})^2}{2(1-\alpha)}\}d\mathbf{w}$$
+$$\frac{1}{\sqrt{2\pi}}exp\left(-\frac{\zeta_{k_i}^2}{2}\right)d\zeta\frac{1}{\sqrt{2\pi \ | \ \alpha\Sigma \ |}}exp\{-\frac{1}{2\alpha}\varepsilon_i^{'}\}de$$
+$$+ \ log \ \prod_{(i,t) \in \tilde{D}_{obs}}P_{it}^{1(r_{it}=1)}(1-P_{it})^{1(r_{it}=0)} $$
+Log-likelihood of $\gamma_t$
+
+$$l(\gamma_t|D_c) = \begin{cases}\sum_{i=1}^{n}1(r_{it}=0)log(1-P_{it}) \ \ t=0,\\\\ \sum_{i=1}^{n}1(r_{it-1}=0)1(r_{it}=0)log(1-P_{it}) \ \ t>0 \end{cases} $$
+
+Joint Prior Distribution for $\gamma_t$
+
+$$\pi(\gamma_t)\propto|\mathbf{X}_t^{*'}\mathbf{D}_t\mathbf{X}_t^{*}|^{1/2}$$
+where
+$$\mathbf{X}_t^{*}=\begin{cases}[1(r_{it}=0)\mathbf{X}_{it}^{*}:i=1,..,n]^{'} \ \ t=0,\\\\  [1(r_{it-1}=0)1(r_{it}=0)\mathbf{X}_{it}^{*}:i=1,..,n]^{'} \ \ t>0\end{cases} $$
